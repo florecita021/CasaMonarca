@@ -1,0 +1,140 @@
+@model List<CasaMonarcaApp.Models.VolunteerLog>
+
+@{
+    ViewData["Title"] = "Coordinator Dashboard";
+}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="container my-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <h2 class="fw-bold text-dark">Panel de Control del Coordinador</h2>
+        <a href="/Home/Index" class="btn btn-outline-primary">← Volver al Registro</a>
+    </div>
+
+    <div class="card p-3 shadow-sm mb-4 bg-light border-0">
+        <label for="searchBar" class="form-label fw-bold text-secondary">🔍 Buscar Voluntario por Nombre</label>
+        <input type="text" id="searchBar" class="form-control form-control-lg" placeholder="Escriba el nombre para filtrar resultados..." onkeyup="filterTable()">
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-md-6">
+            <div class="card p-3 shadow-sm h-100 border-0">
+                <h5 class="fw-bold text-center text-muted mb-3">Total Hours Done per Day (Last 7 Days)</h5>
+                <canvas id="hoursLineChart"></canvas>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card p-3 shadow-sm h-100 border-0">
+                <h5 class="fw-bold text-center text-muted mb-3">Attendance Breakdown (Last 7 Days)</h5>
+                <canvas id="attendanceBarChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-dark text-white fw-semibold">
+            Resumen Global de Datos
+        </div>
+        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+            <table class="table table-hover align-middle mb-0" id="dataTable">
+                <thead class="table-light sticky-top">
+                    <tr>
+                        <th>Name</th>
+                        <th>Identification</th>
+                        <th>Day</th>
+                        <th>Hours Volunteered</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model == null || !Model.Any())
+                    {
+                        <tr id="noDataRow">
+                            <td colspan="4" class="text-center py-4 text-muted">No entries recorded yet.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var log in Model)
+                        {
+                            <tr>
+                                <td class="volunteer-name fw-semibold text-primary">@log.FullName</td>
+                                <td class="text-secondary">@log.IdentificationNumber</td>
+                                <td>@log.Date.ToString("MM/dd/yyyy")</td>
+                                <td class="fw-bold text-dark">@log.HoursVolunteered.ToString("F2") hrs</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Import to Excel Export Button Trigger -->
+    <div class="text-end">
+        <a href="/Home/ExportToExcel" class="btn btn-success btn-lg px-4 py-2 shadow-sm fw-bold">
+            📥 Import to Excel
+        </a>
+    </div>
+</div>
+
+<script>
+// Filter table rows interactively based on user query inputs
+function filterTable() {
+    let input = document.getElementById('searchBar').value.toLowerCase();
+    let rows = document.querySelectorAll('#dataTable tbody tr');
+    
+    rows.forEach(row => {
+        if(row.id === "noDataRow") return;
+        let name = row.querySelector('.volunteer-name').innerText.toLowerCase();
+        row.style.display = name.includes(input) ? '' : 'none';
+    });
+}
+
+// Read the real computed data arrays from the C# controller backend safely
+const dynamicLabels = @Html.Raw(ViewBag.ChartLabels ?? "[]");
+const dynamicHours = @Html.Raw(ViewBag.HoursData ?? "[]");
+const dynamicAttendance = @Html.Raw(ViewBag.AttendanceData ?? "[]");
+
+// 1. Dynamic Line Chart: Total Hours Done per Day (Real Data Only)
+const ctxLine = document.getElementById('hoursLineChart').getContext('2d');
+new Chart(ctxLine, {
+    type: 'line',
+    data: {
+        labels: dynamicLabels,
+        datasets: [{
+            label: 'Hours Volunteered',
+            data: dynamicHours, 
+            borderColor: '#3498db',
+            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+            fill: true,
+            tension: 0.2
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: { y: { beginAtZero: true } }
+    }
+});
+
+// 2. Dynamic Bar Chart: Attendance Breakdown (Orange Bars Only)
+const ctxBar = document.getElementById('attendanceBarChart').getContext('2d');
+new Chart(ctxBar, {
+    type: 'bar',
+    data: {
+        labels: dynamicLabels,
+        datasets: [
+            {
+                label: 'Who Actually Went',
+                data: dynamicAttendance,
+                backgroundColor: 'rgba(255, 140, 0, 0.85)', // Your bright Orange theme color
+                barPercentage: 0.5
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+    }
+});
+</script>

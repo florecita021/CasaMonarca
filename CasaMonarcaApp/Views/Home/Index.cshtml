@@ -2,7 +2,68 @@
     ViewData["Title"] = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success text-center mx-auto mb-4" style="max-width: 550px;">
+        @TempData["SuccessMessage"]
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger text-center mx-auto mb-4" style="max-width: 550px;">
+        @TempData["ErrorMessage"]
+    </div>
+}
+
+<div class="d-flex justify-content-between align-items-center mb-5 pb-3 border-bottom">
+    <h1 class="display-5 fw-bold" style="color: #2c3e50;">Casa Monarca Registration</h1>
+    <button class="btn btn-outline-secondary fw-semibold px-4 py-2" onclick="checkCoordinatorPassword()">
+        Acceso de Coordinador
+    </button>
 </div>
+
+<div class="card shadow border-0 p-4 mx-auto" style="max-width: 550px; background-color: #f8f9fa;">
+    <h3 class="text-center mb-4 text-secondary">Volunteer Sign-In</h3>
+    
+    <form action="/Home/SubmitRegistration" method="POST">
+        <div class="mb-4">
+            <label class="form-label fw-bold">Full Name</label>
+            <input type="text" class="form-control form-control-lg bg-white" name="FullName" placeholder="e.g. John Doe" required>
+        </div>
+        
+        <div class="mb-4">
+            <label class="form-label fw-bold">Identification Number</label>
+            <input type="text" class="form-control form-control-lg bg-white" name="IdentificationNumber" placeholder="e.g. ID-12345" required>
+        </div>
+        
+        <div class="mb-4">
+            <label class="form-label fw-bold">Date</label>
+            <input type="date" class="form-control form-control-lg bg-white" name="Date" required>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <label class="form-label fw-bold">Time of Entry</label>
+                <input type="time" class="form-control form-control-lg bg-white" name="TimeOfEntry" required>
+            </div>
+            <div class="col-md-6 mb-4">
+                <label class="form-label fw-bold">Time of Leaving</label>
+                <input type="time" class="form-control form-control-lg bg-white" name="TimeOfLeaving" required>
+            </div>
+        </div>
+        
+        <button type="submit" class="btn btn-primary btn-lg w-100 mt-2 shadow-sm">Submit Registration</button>
+    </form>
+</div>
+
+<script>
+function checkCoordinatorPassword() {
+    let password = prompt("Por favor, introduzca la contraseña de Coordinador:");
+    if (password === "AdminCasaMonarca2026") { 
+        window.location.href = "/Home/Dashboard"; 
+    } else if (password != null) {
+        alert("¡Contraseña incorrecta!");
+    }
+}
+</script>
