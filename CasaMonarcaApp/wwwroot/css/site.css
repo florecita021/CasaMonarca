@@ -29,3 +29,104 @@ body {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
 }
+
+/* ==========================================================================
+   --- DISEÑO CASAMONARCA: ESTILOS PERSONALIZADOS ---
+   ========================================================================== */
+
+/* 1. Estilo para todas las cajas de texto, inputs de búsqueda y selección */
+input[type="text"], 
+input[type="search"], 
+input[type="number"], 
+input[type="email"], 
+select, 
+textarea {
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 8px 12px;
+    transition: all 0.3s ease;
+}
+
+input[type="text"], 
+input[type="search"], 
+input[type="number"], 
+input[type="email"],
+input[type="date"],
+input[type="time"],
+select, 
+textarea {
+    border: 2px solid #FF9E79 !important; /* Naranja claro por defecto */
+    border-radius: 6px;
+    padding: 8px 12px;
+    transition: all 0.3s ease;
+}
+
+/* Borde naranja brillante e iluminación cuando el usuario hace clic */
+input[type="text"]:focus, 
+input[type="search"]:focus, 
+input[type="number"]:focus, 
+input[type="date"]:focus,
+input[type="time"]:focus,
+select:focus, 
+textarea:focus,
+#searchBar:focus {
+    border-color: #F05A24 !important; /* Naranja oscuro del logo */
+    box-shadow: 0 0 0 4px rgba(240, 90, 36, 0.25) !important;
+    outline: none;
+}
+
+/* 2. Estilo para el botón de "Exportar a Excel" u otros botones principales */
+.btn-exportar, 
+.btn-primary-monarca {
+    background-color: #F05A24 !important;
+    color: white !important;
+    border: none !important;
+    font-weight: 600;
+    border-radius: 6px;
+    padding: 8px 16px;
+    transition: background-color 0.2s ease;
+}
+
+/* El botón se vuelve un poco más oscuro cuando pasas el mouse por encima */
+.btn-exportar:hover, 
+.btn-primary-monarca:hover {
+    background-color: #D64513 !important;
+    color: white !important;
+    cursor: pointer;
+}
+
+/* Ajuste específico para asegurar que la barra de búsqueda brille en naranja */
+#searchBar:focus {
+    border-color: #F05A24 !important;
+    box-shadow: 0 0 0 3px rgba(240, 90, 36, 0.25) !important;
+    outline: none;
+}
+/* Reemplazar el botón azul clásico por el Naranja Monarca */
+.btn-outline-primary {
+    color: #F05A24 !important;
+    border-color: #F05A24 !important;
+}
+
+.btn-outline-primary:hover {
+    background-color: #F05A24 !important;
+    color: white !important;
+    border-color: #F05A24 !important;
+}
+
+/* Cambia el botón principal "Submit Registration" a naranja */
+.btn-primary, input[type="submit"] {
+    background-color: #F05A24 !important;
+    border-color: #F05A24 !important;
+    color: white !important;
+    font-weight: bold;
+}
+
+.btn-primary:hover {
+    background-color: #D64513 !important;
+    border-color: #D64513 !important;
+}
+/* Encabezado de la tabla personalizado */
+.bg-monarca-table {
+    background-color: #F05A24 !important;
+    color: white !important;
+}

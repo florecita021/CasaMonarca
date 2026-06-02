@@ -28,7 +28,6 @@ C:\Users\reflg\OneDrive\Documents\GitHub\CasaMonarca\CasaMonarcaApp\obj\Debug\ne
 C:\Users\reflg\OneDrive\Documents\GitHub\CasaMonarca\CasaMonarcaApp\obj\Debug\net10.0\scopedcss\Views\Shared\_Layout.cshtml.rz.scp.css
 C:\Users\reflg\OneDrive\Documents\GitHub\CasaMonarca\CasaMonarcaApp\obj\Debug\net10.0\scopedcss\bundle\CasaMonarcaApp.styles.css
 C:\Users\reflg\OneDrive\Documents\GitHub\CasaMonarca\CasaMonarcaApp\obj\Debug\net10.0\scopedcss\projectbundle\CasaMonarcaApp.bundle.scp.css
-C:\Users\reflg\OneDrive\Documents\GitHub\CasaMonarca\CasaMonarcaApp\obj\Debug\net10.0\compressed\6igmsqc8ur-{0}-b9sayid5wm-b9sayid5wm.gz
 C:\Users\reflg\OneDrive\Documents\GitHub\CasaMonarca\CasaMonarcaApp\obj\Debug\net10.0\compressed\eh2y1f1v5i-{0}-61n19gt1b8-61n19gt1b8.gz
 C:\Users\reflg\OneDrive\Documents\GitHub\CasaMonarca\CasaMonarcaApp\obj\Debug\net10.0\compressed\9anuak15zw-{0}-xtxxf3hu2r-xtxxf3hu2r.gz
 C:\Users\reflg\OneDrive\Documents\GitHub\CasaMonarca\CasaMonarcaApp\obj\Debug\net10.0\compressed\qiqsq0f6b3-{0}-bqjiyaj88i-bqjiyaj88i.gz
@@ -106,3 +105,4 @@ C:\Users\reflg\OneDrive\Documents\GitHub\CasaMonarca\CasaMonarcaApp\bin\Debug\ne
 C:\Users\reflg\OneDrive\Documents\GitHub\CasaMonarca\CasaMonarcaApp\bin\Debug\net10.0\CasaMonarcaApp.pdb
 C:\Users\reflg\OneDrive\Documents\GitHub\CasaMonarca\CasaMonarcaApp\obj\Debug\net10.0\CasaMonarcaApp.genruntimeconfig.cache
 C:\Users\reflg\OneDrive\Documents\GitHub\CasaMonarca\CasaMonarcaApp\obj\Debug\net10.0\ref\CasaMonarcaApp.dll
+C:\Users\reflg\OneDrive\Documents\GitHub\CasaMonarca\CasaMonarcaApp\obj\Debug\net10.0\compressed\6igmsqc8ur-{0}-f1whecdzww-f1whecdzww.gz

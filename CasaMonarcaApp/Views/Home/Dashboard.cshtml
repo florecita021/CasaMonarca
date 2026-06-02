@@ -7,14 +7,18 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <div class="container my-4">
-    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
-        <h2 class="fw-bold text-dark">Panel de Control del Coordinador</h2>
-        <a href="/Home/Index" class="btn btn-outline-primary">← Volver al Registro</a>
+<div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+    <div class="d-flex align-items-center">
+        <!-- Logo de Casa Monarca -->
+        <img src="/logo.png" alt="Logo Casa Monarca" class="me-3" style="height: 50px; width: auto; object-fit: contain;" />
+        <h2 class="fw-bold text-dark mb-0">Panel de Control del Coordinador</h2>
     </div>
+    <a href="/Home/Index" class="btn btn-outline-primary">← Volver al Registro</a>
+</div>
 
     <div class="card p-3 shadow-sm mb-4 bg-light border-0">
         <label for="searchBar" class="form-label fw-bold text-secondary">🔍 Buscar Voluntario por Nombre</label>
-        <input type="text" id="searchBar" class="form-control form-control-lg" placeholder="Escriba el nombre para filtrar resultados..." onkeyup="filterTable()">
+        <input type="text" id="searchBar" class="form-control form-control-lg border-2" placeholder="Escriba el nombre para filtrar resultados..." onkeyup="filterTable()">
     </div>
 
     <div class="row g-4 mb-5">
@@ -33,8 +37,7 @@
     </div>
 
     <div class="card shadow-sm border-0 mb-4">
-        <div class="card-header bg-dark text-white fw-semibold">
-            Resumen Global de Datos
+<div class="card-header bg-monarca-table text-white fw-semibold">            Resumen Global de Datos
         </div>
         <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
             <table class="table table-hover align-middle mb-0" id="dataTable">
@@ -70,9 +73,9 @@
         </div>
     </div>
 
-    <!-- Import to Excel Export Button Trigger -->
+    <!-- Import to Excel Export Button Trigger (Cambiado a diseño Naranja Monarca) -->
     <div class="text-end">
-        <a href="/Home/ExportToExcel" class="btn btn-success btn-lg px-4 py-2 shadow-sm fw-bold">
+        <a href="/Home/ExportToExcel" class="btn btn-exportar btn-lg px-4 py-2 shadow-sm fw-bold">
             📥 Import to Excel
         </a>
     </div>
@@ -96,7 +99,7 @@ const dynamicLabels = @Html.Raw(ViewBag.ChartLabels ?? "[]");
 const dynamicHours = @Html.Raw(ViewBag.HoursData ?? "[]");
 const dynamicAttendance = @Html.Raw(ViewBag.AttendanceData ?? "[]");
 
-// 1. Dynamic Line Chart: Total Hours Done per Day (Real Data Only)
+// 1. Dynamic Line Chart: Total Hours Done per Day (Naranja Monarca)
 const ctxLine = document.getElementById('hoursLineChart').getContext('2d');
 new Chart(ctxLine, {
     type: 'line',
@@ -105,8 +108,8 @@ new Chart(ctxLine, {
         datasets: [{
             label: 'Hours Volunteered',
             data: dynamicHours, 
-            borderColor: '#3498db',
-            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+            borderColor: '#F05A24', // Cambiado al naranja del logo
+            backgroundColor: 'rgba(240, 90, 36, 0.1)', // Sombreado naranja suave
             fill: true,
             tension: 0.2
         }]
@@ -127,7 +130,7 @@ new Chart(ctxBar, {
             {
                 label: 'Who Actually Went',
                 data: dynamicAttendance,
-                backgroundColor: 'rgba(255, 140, 0, 0.85)', // Your bright Orange theme color
+                backgroundColor: '#F05A24', // Ajustado exactamente al color corporativo
                 barPercentage: 0.5
             }
         ]
