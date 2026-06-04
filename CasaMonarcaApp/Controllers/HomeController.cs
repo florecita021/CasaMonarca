@@ -7,6 +7,13 @@ using ClosedXML.Excel;
 
 namespace CasaMonarcaApp.Controllers;
 
+// 🎯 Creamos el ViewModel AQUÍ, afuera de la clase para que no cause errores de compilación
+public class RankingVoluntarioViewModel
+{
+    public string NombreCompleto { get; set; } = string.Empty;
+    public double HorasTotales { get; set; }
+}
+
 public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
@@ -108,7 +115,7 @@ public class HomeController : Controller
             if (response.IsSuccessStatusCode)
             {
                 var jsonResult = response.Content.ReadAsStringAsync().Result;
-                dynamic? rawLogs = JsonConvert.DeserializeObject(jsonResult);
+                var rawLogs = JsonConvert.DeserializeObject<List<dynamic>>(jsonResult);
 
                 if (rawLogs != null)
                 {
@@ -136,8 +143,10 @@ public class HomeController : Controller
 
     public IActionResult Dashboard()
     {
+        // 1. Traemos los datos limpios de Supabase
         var logs = GetLogsFromDatabase();
 
+        // 2. Procesamos datos para las gráficas existentes de los últimos 7 días
         var last7Days = Enumerable.Range(0, 7)
             .Select(i => DateTime.Today.AddDays(-i))
             .OrderBy(d => d)
@@ -157,56 +166,20 @@ public class HomeController : Controller
         ViewBag.HoursData = System.Text.Json.JsonSerializer.Serialize(hoursPerDay);
         ViewBag.AttendanceData = System.Text.Json.JsonSerializer.Serialize(attendancePerDay);
 
+        // 🔥 3. NUEVO: Agrupamos por voluntario usando la propiedad nativa HoursVolunteered
+        var rankingVoluntarios = logs
+            .GroupBy(l => l.FullName)
+            .Select(grupo => new RankingVoluntarioViewModel
+            {
+                NombreCompleto = grupo.Key,
+                HorasTotales = Math.Round(grupo.Sum(l => l.HoursVolunteered), 2)
+            })
+            .OrderByDescending(r => r.HorasTotales) // De mayor a menor
+            .ToList();
+
+        // Pasamos el ranking procesado a la vista mediante el ViewBag
+        ViewBag.RankingVoluntarios = rankingVoluntarios;
+
         return View(logs);
-    }
-
-    public IActionResult Error()
-    {
-        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-    }
-
-    public IActionResult ExportToExcel()
-    {
-        var data = GetLogsFromDatabase();
-
-        using (var workbook = new XLWorkbook())
-        {
-            var worksheet = workbook.Worksheets.Add("Casa Monarca Logs");
-
-            worksheet.Cell(1, 1).Value = "Nombre Completo";
-            worksheet.Cell(1, 2).Value = "Matricula";
-            worksheet.Cell(1, 3).Value = "Fecha";
-            worksheet.Cell(1, 4).Value = "Hora de Entrada";
-            worksheet.Cell(1, 5).Value = "Hora de Salida";
-            worksheet.Cell(1, 6).Value = "Horas Totales";
-
-            worksheet.Row(1).Style.Font.Bold = true;
-
-            int currentRow = 2;
-            foreach (var log in data)
-            {
-                worksheet.Cell(currentRow, 1).Value = log.FullName;
-                worksheet.Cell(currentRow, 2).Value = log.IdentificationNumber;
-                worksheet.Cell(currentRow, 3).Value = log.Date.ToString("MM/dd/yyyy");
-                worksheet.Cell(currentRow, 4).Value = log.TimeOfEntry?.ToString(@"hh\:mm") ?? "";
-                worksheet.Cell(currentRow, 5).Value = log.TimeOfLeaving?.ToString(@"hh\:mm") ?? "";
-                worksheet.Cell(currentRow, 6).Value = log.HoursVolunteered;
-                currentRow++;
-            }
-
-            worksheet.Columns().AdjustToContents();
-
-            using (var stream = new MemoryStream())
-            {
-                workbook.SaveAs(stream);
-                var content = stream.ToArray();
-
-                return File(
-                    content, 
-                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", 
-                    "CasaMonarca_VolunteerHistory.xlsx"
-                );
-            }
-        }
     }
 }
