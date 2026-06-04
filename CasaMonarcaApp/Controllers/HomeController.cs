@@ -80,7 +80,7 @@ public class HomeController : Controller
                 throw new Exception($"Supabase API Error: {response.StatusCode} - {errorBody}");
             }
 
-            TempData["SuccessMessage"] = $"Thank you, {newLog.FullName}! Your {newLog.HoursVolunteered:F2} hours have been registered safely.";
+            TempData["SuccessMessage"] = $"Gracias, {newLog.FullName}! Tus {newLog.HoursVolunteered:F2} horas han sido registradas de forma segura.";
         }
         catch (Exception ex)
         {
