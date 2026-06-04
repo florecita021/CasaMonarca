@@ -9,6 +9,8 @@ public class Program
         // Add services to the container.
         builder.Services.AddControllersWithViews();
 
+// Agrega esta línea para activar el soporte de llamadas HTTP de tu controlador
+builder.Services.AddHttpClient();
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.
@@ -19,7 +21,7 @@ public class Program
             app.UseHsts();
         }
 
-        app.UseHttpsRedirection();
+        //app.UseHttpsRedirection();
         app.UseRouting();
 
         app.UseAuthorization();

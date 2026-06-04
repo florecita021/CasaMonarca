@@ -24,13 +24,13 @@
     <div class="row g-4 mb-5">
         <div class="col-md-6">
             <div class="card p-3 shadow-sm h-100 border-0">
-                <h5 class="fw-bold text-center text-muted mb-3">Total Hours Done per Day (Last 7 Days)</h5>
+                <h5 class="fw-bold text-center text-muted mb-3">Horas Realizadas (Ultimos 7 dias)</h5>
                 <canvas id="hoursLineChart"></canvas>
             </div>
         </div>
         <div class="col-md-6">
             <div class="card p-3 shadow-sm h-100 border-0">
-                <h5 class="fw-bold text-center text-muted mb-3">Attendance Breakdown (Last 7 Days)</h5>
+                <h5 class="fw-bold text-center text-muted mb-3">Desglose de Asistencia (Ultimos 7 Dias)</h5>
                 <canvas id="attendanceBarChart"></canvas>
             </div>
         </div>
@@ -43,10 +43,10 @@
             <table class="table table-hover align-middle mb-0" id="dataTable">
                 <thead class="table-light sticky-top">
                     <tr>
-                        <th>Name</th>
-                        <th>Identification</th>
-                        <th>Day</th>
-                        <th>Hours Volunteered</th>
+                        <th>Nombre</th>
+                        <th>Identificación</th>
+                        <th>Día</th>
+                        <th>Horas de Voluntariado</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -76,7 +76,7 @@
     <!-- Import to Excel Export Button Trigger (Cambiado a diseño Naranja Monarca) -->
     <div class="text-end">
         <a href="/Home/ExportToExcel" class="btn btn-exportar btn-lg px-4 py-2 shadow-sm fw-bold">
-            📥 Import to Excel
+             Importar a Excel
         </a>
     </div>
 </div>
@@ -106,7 +106,7 @@ new Chart(ctxLine, {
     data: {
         labels: dynamicLabels,
         datasets: [{
-            label: 'Hours Volunteered',
+            label: 'Horas de Voluntariado',
             data: dynamicHours, 
             borderColor: '#F05A24', // Cambiado al naranja del logo
             backgroundColor: 'rgba(240, 90, 36, 0.1)', // Sombreado naranja suave
@@ -128,7 +128,7 @@ new Chart(ctxBar, {
         labels: dynamicLabels,
         datasets: [
             {
-                label: 'Who Actually Went',
+                label: 'Asistentes',
                 data: dynamicAttendance,
                 backgroundColor: '#F05A24', // Ajustado exactamente al color corporativo
                 barPercentage: 0.5

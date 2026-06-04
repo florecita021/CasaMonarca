@@ -1,6 +1,8 @@
-using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using CasaMonarcaApp.Models;
+using System.Diagnostics;
+using System.Text;
+using Newtonsoft.Json;
 using ClosedXML.Excel;
 
 namespace CasaMonarcaApp.Controllers;
@@ -8,13 +10,16 @@ namespace CasaMonarcaApp.Controllers;
 public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
-    
-    // Explicitly initializing the list immediately to guarantee it is NEVER null
-    private static readonly List<VolunteerLog> _volunteerLogs = new List<VolunteerLog>();
+    private readonly IHttpClientFactory _httpClientFactory;
 
-    public HomeController(ILogger<HomeController> logger)
+    // 🌐 URL de la API Web (Puerto 443 HTTPS - Jamás bloqueado por proveedores de internet)
+    private const string SupabaseUrl = "https://mncapvylwfyddwemnvdm.supabase.co/rest/v1/volunteerlogs";
+    private const string SupabaseApiKey = "sb_publishable_tzG61fb4uWBw1-A7yIDolQ_ghlsHwuy";
+
+    public HomeController(ILogger<HomeController> logger, IHttpClientFactory httpClientFactory)
     {
         _logger = logger;
+        _httpClientFactory = httpClientFactory;
     }
 
     public IActionResult Index()
@@ -22,8 +27,8 @@ public class HomeController : Controller
         return View();
     }
 
-[HttpPost]
-    public IActionResult SubmitRegistration(VolunteerLog newLog)
+    [HttpPost]
+    public async Task<IActionResult> SubmitRegistration(VolunteerLog newLog, string verificationCode)
     {
         if (newLog == null)
         {
@@ -31,89 +36,152 @@ public class HomeController : Controller
             return RedirectToAction("Index");
         }
 
-        // NEW LOGIC: Check if the times actually bound correctly from HTML before trying to save
+        // 🔐 VALIDACIÓN DEL CÓDIGO DE SEGURIDAD
+        const string CodigoCorrecto = "ACM26";
+        if (string.IsNullOrEmpty(verificationCode) || verificationCode.Trim() != CodigoCorrecto)
+        {
+            TempData["ErrorMessage"] = "Código de verificación incorrecto o no proporcionado. Las horas no fueron registradas.";
+            return RedirectToAction("Index");
+        }
+
+        // Validación de tiempos
         if (!newLog.TimeOfEntry.HasValue || !newLog.TimeOfLeaving.HasValue)
         {
             TempData["ErrorMessage"] = "Please ensure both Time of Entry and Time of Leaving are filled out correctly.";
             return RedirectToAction("Index");
         }
 
-        // Add to our list safely
-        _volunteerLogs.Add(newLog);
+        try
+        {
+            // Preparar los datos en el formato JSON exacto para Supabase
+            var payload = new
+            {
+                fullname = newLog.FullName,
+                identificationnumber = newLog.IdentificationNumber,
+                date = newLog.Date.ToString("yyyy-MM-dd"),
+                timeofentry = newLog.TimeOfEntry.Value.ToString(@"hh\:mm\:ss"),
+                timeofleaving = newLog.TimeOfLeaving.Value.ToString(@"hh\:mm\:ss")
+            };
 
-        TempData["SuccessMessage"] = $"Thank you, {newLog.FullName}! Your {newLog.HoursVolunteered:F2} hours have been registered.";
+            var json = JsonConvert.SerializeObject(payload);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            // Crear la petición HTTP web segura
+            var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Clear();
+            client.DefaultRequestHeaders.Add("apikey", SupabaseApiKey);
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {SupabaseApiKey}");
+
+            var response = await client.PostAsync(SupabaseUrl, content);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorBody = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Supabase API Error: {response.StatusCode} - {errorBody}");
+            }
+
+            TempData["SuccessMessage"] = $"Thank you, {newLog.FullName}! Your {newLog.HoursVolunteered:F2} hours have been registered safely.";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error saving to Supabase via API");
+            TempData["ErrorMessage"] = $"Error de red: {ex.Message}"; 
+        }
+
         return RedirectToAction("Index");
     }
 
-    // Keep this exactly the same
-    public static List<VolunteerLog> GetLogs() 
+    public List<VolunteerLog> GetLogsFromDatabase()
     {
-        return _volunteerLogs ?? new List<VolunteerLog>();
+        var logs = new List<VolunteerLog>();
+
+        try
+        {
+            var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Clear();
+            client.DefaultRequestHeaders.Add("apikey", SupabaseApiKey);
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {SupabaseApiKey}");
+
+            // 🔍 Solicitar los datos ordenados por fecha de forma descendente usando filtros URL nativos
+            var response = client.GetAsync($"{SupabaseUrl}?select=*&order=date.desc").Result;
+
+            if (response.IsSuccessStatusCode)
+            {
+                var jsonResult = response.Content.ReadAsStringAsync().Result;
+                dynamic? rawLogs = JsonConvert.DeserializeObject(jsonResult);
+
+                if (rawLogs != null)
+                {
+                    foreach (var item in rawLogs)
+                    {
+                        logs.Add(new VolunteerLog
+                        {
+                            FullName = (string?)item.fullname ?? "Unknown",
+                            IdentificationNumber = (string?)item.identificationnumber ?? "N/A",
+                            Date = item.date != null ? DateTime.Parse((string)item.date) : DateTime.Today,
+                            TimeOfEntry = item.timeofentry != null ? TimeSpan.Parse((string)item.timeofentry) : TimeSpan.Zero,
+                            TimeOfLeaving = item.timeofleaving != null ? TimeSpan.Parse((string)item.timeofleaving) : TimeSpan.Zero
+                        });
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error reading from Supabase via API");
+        }
+
+        return logs;
     }
 
-    // Keep this exactly the same
-    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-    // Displays the Coordinator Dashboard page
-// Displays the Coordinator Dashboard page with real dynamic data
- // Displays the Coordinator Dashboard page with real dynamic data
     public IActionResult Dashboard()
     {
-        var logs = GetLogs();
+        var logs = GetLogsFromDatabase();
 
-        // 1. Get the last 7 calendar days starting from today backward
         var last7Days = Enumerable.Range(0, 7)
             .Select(i => DateTime.Today.AddDays(-i))
             .OrderBy(d => d)
             .ToList();
 
-        // 2. Format dates as labels for the charts (e.g., "Jun 02")
         var chartLabels = last7Days.Select(d => d.ToString("MMM dd")).ToList();
 
-        // 3. Calculate actual total hours worked per day from real logs
         var hoursPerDay = last7Days.Select(date => 
             logs.Where(l => l.Date.Date == date.Date).Sum(l => l.HoursVolunteered)
         ).ToList();
 
-        // 4. Calculate actual distinct headcount per day from real logs
         var attendancePerDay = last7Days.Select(date => 
             logs.Where(l => l.Date.Date == date.Date).Select(l => l.IdentificationNumber).Distinct().Count()
         ).ToList();
 
-        // FIXED: Using standard built-in System.Text.Json instead of Newtonsoft
         ViewBag.ChartLabels = System.Text.Json.JsonSerializer.Serialize(chartLabels);
         ViewBag.HoursData = System.Text.Json.JsonSerializer.Serialize(hoursPerDay);
         ViewBag.AttendanceData = System.Text.Json.JsonSerializer.Serialize(attendancePerDay);
 
         return View(logs);
     }
+
     public IActionResult Error()
     {
         return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
     }
 
-
-    // Generates and downloads a real Excel file containing all logged data
     public IActionResult ExportToExcel()
     {
-        var data = GetLogs();
+        var data = GetLogsFromDatabase();
 
-        // Create a blank Excel Workbook layout
         using (var workbook = new XLWorkbook())
         {
             var worksheet = workbook.Worksheets.Add("Casa Monarca Logs");
 
-            // 1. Create styled Header Row columns
-            worksheet.Cell(1, 1).Value = "Full Name";
-            worksheet.Cell(1, 2).Value = "Identification Number";
-            worksheet.Cell(1, 3).Value = "Date Recorded";
-            worksheet.Cell(1, 4).Value = "Time of Entry";
-            worksheet.Cell(1, 5).Value = "Time of Leaving";
-            worksheet.Cell(1, 6).Value = "Total Hours";
+            worksheet.Cell(1, 1).Value = "Nombre Completo";
+            worksheet.Cell(1, 2).Value = "Matricula";
+            worksheet.Cell(1, 3).Value = "Fecha";
+            worksheet.Cell(1, 4).Value = "Hora de Entrada";
+            worksheet.Cell(1, 5).Value = "Hora de Salida";
+            worksheet.Cell(1, 6).Value = "Horas Totales";
 
-            // Make headers bold for a clean look
             worksheet.Row(1).Style.Font.Bold = true;
 
-            // 2. Populate the worksheet rows with your real data log list
             int currentRow = 2;
             foreach (var log in data)
             {
@@ -126,16 +194,13 @@ public class HomeController : Controller
                 currentRow++;
             }
 
-            // Auto-adjust layout sizes so columns widen perfectly to match text lengths
             worksheet.Columns().AdjustToContents();
 
-            // 3. Compile the workbook into a memory stream data packet to download
             using (var stream = new MemoryStream())
             {
                 workbook.SaveAs(stream);
                 var content = stream.ToArray();
 
-                // Stream the file back to the browser download manager
                 return File(
                     content, 
                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", 

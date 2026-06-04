@@ -1,64 +1,254 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Registro de Voluntarios";
 }
 
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert alert-success text-center mx-auto mb-4" style="max-width: 550px;">
-        @TempData["SuccessMessage"]
-    </div>
-}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
 
-@if (TempData["ErrorMessage"] != null)
-{
-    <div class="alert alert-danger text-center mx-auto mb-4" style="max-width: 550px;">
-        @TempData["ErrorMessage"]
-    </div>
-}
+<style>
+    body {
+        font-family: 'Montserrat', sans-serif;
+        background: radial-gradient(circle at center, #ff8c42 0%, #fcb07e 40%, #ffffff 100%);
+        background-attachment: fixed;
+        min-height: 100vh;
+        position: relative;
+        overflow-x: hidden;
+    }
 
-<div class="d-flex justify-content-between align-items-center mb-5 pb-3 border-bottom">
-    <div class="d-flex align-items-center">
-        <!-- Logo de Casa Monarca -->
-        <img src="/logo.png" alt="Logo Casa Monarca" class="me-3" style="height: 55px; width: auto; object-fit: contain;" />
-        <h1 class="display-5 fw-bold mb-0" style="color: #2c3e50;">Casa Monarca Registration</h1>
-    </div>
-    <button class="btn btn-outline-secondary fw-semibold px-4 py-2" onclick="checkCoordinatorPassword()">
-        Acceso de Coordinador
-    </button>
+    /* 🛡️ CONTENEDOR FIJO QUE AISLA LAS MARIPOSAS */
+    .background-butterflies-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 0;
+        pointer-events: none;
+        overflow: hidden;
+        /* 🔥 SOLUCIÓN DEFINITIVA: Forzamos la fusión de todo el contenedor con el fondo del body */
+        mix-blend-mode: multiply; 
+    }
+
+    .mariposa-bg {
+        position: absolute;
+        width: 250px; /* Tamaño base */
+        height: auto;
+        opacity: 0.22; /* Opacidad sutil de marca de agua */
+        pointer-events: none;
+    }
+
+    /* 🗺️ UBICACIONES FIJAS RESPECTO A LA PANTALLA */
+    
+    /* Superior Izquierda - Mediana */
+    .butterfly-1 {
+        top: 12%;
+        left: 2%;
+        transform: rotate(-25deg) scale(1);
+    }
+
+    /* Superior Derecha - Gigante */
+    .butterfly-2 {
+        top: -5%;
+        right: -5%;
+        transform: rotate(45deg) scale(1.8);
+        opacity: 0.14;
+    }
+
+    /* Centro Izquierda - Pequeña */
+    .butterfly-3 {
+        top: 50%;
+        left: 4%;
+        transform: rotate(15deg) scale(0.6);
+    }
+
+    /* Centro Derecha - Mediana Grande */
+    .butterfly-4 {
+        top: 45%;
+        right: 2%;
+        transform: rotate(-35deg) scale(1.1);
+    }
+
+    /* Inferior Izquierda - Grande */
+    .butterfly-5 {
+        bottom: -5%;
+        left: -2%;
+        transform: rotate(-10deg) scale(1.5);
+        opacity: 0.16;
+    }
+
+    /* Inferior Derecha - Pequeña */
+    .butterfly-6 {
+        bottom: 5%;
+        right: 10%;
+        transform: rotate(20deg) scale(0.7);
+    }
+
+    /* Capa del contenido por encima de todo */
+    .main-content {
+        position: relative;
+        z-index: 10;
+    }
+
+    .custom-alert {
+        border: none;
+        border-radius: 12px;
+        font-weight: 600;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        max-width: 550px;
+    }
+
+    .brand-title {
+        font-weight: 800;
+        color: #1a1a1a;
+        letter-spacing: -0.5px;
+    }
+
+    .custom-card {
+        max-width: 550px;
+        background: rgba(255, 255, 255, 0.98);
+        border-radius: 20px;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        box-shadow: 0 15px 40px rgba(230, 92, 0, 0.12);
+    }
+
+    .card-subtitle {
+        font-weight: 700;
+        color: #e65c00;
+        letter-spacing: 0.5px;
+    }
+
+    .custom-input {
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .custom-input:focus {
+        border-color: #e65c00;
+        box-shadow: 0 0 0 4px rgba(230, 92, 0, 0.15);
+        background-color: #ffffff !important;
+    }
+
+    .form-label {
+        color: #4a5568;
+        font-size: 0.9rem;
+        margin-bottom: 0.4rem;
+    }
+
+    .btn-monarca {
+        background: linear-gradient(90deg, #e65c00 0%, #ff7a21 100%);
+        border: none;
+        border-radius: 10px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        padding: 12px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-monarca:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 7px 20px rgba(230, 92, 0, 0.25);
+        opacity: 0.95;
+    }
+
+    .btn-coordinator {
+        color: #1a1a1a;
+        border: 2px solid #1a1a1a;
+        background: transparent;
+        border-radius: 10px;
+        font-weight: 700;
+        transition: all 0.3s ease;
+    }
+
+    .btn-coordinator:hover {
+        background: #1a1a1a;
+        color: #ffffff;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+</style>
+
+<div class="background-butterflies-container">
+    <img src="/mariposa.png?v=5" class="mariposa-bg butterfly-1" alt="" />
+    <img src="/mariposa.png?v=5" class="mariposa-bg butterfly-2" alt="" />
+    <img src="/mariposa.png?v=5" class="mariposa-bg butterfly-3" alt="" />
+    <img src="/mariposa.png?v=5" class="mariposa-bg butterfly-4" alt="" />
+    <img src="/mariposa.png?v=5" class="mariposa-bg butterfly-5" alt="" />
+    <img src="/mariposa.png?v=5" class="mariposa-bg butterfly-6" alt="" />
 </div>
 
-<div class="card shadow border-0 p-4 mx-auto" style="max-width: 550px; background-color: #f8f9fa;">
-    <h3 class="text-center mb-4 text-secondary">Volunteer Sign-In</h3>
-    
-    <form action="/Home/SubmitRegistration" method="POST">
-        <div class="mb-4">
-            <label class="form-label fw-bold">Full Name</label>
-            <input type="text" class="form-control form-control-lg bg-white" name="FullName" placeholder="e.g. John Doe" required>
+<div class="container py-4 main-content">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success text-center mx-auto mb-4 custom-alert">
+            ✨ @TempData["SuccessMessage"]
         </div>
-        
-        <div class="mb-4">
-            <label class="form-label fw-bold">Identification Number</label>
-            <input type="text" class="form-control form-control-lg bg-white" name="IdentificationNumber" placeholder="e.g. ID-12345" required>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger text-center mx-auto mb-4 custom-alert">
+            ⚠️ @TempData["ErrorMessage"]
         </div>
-        
-        <div class="mb-4">
-            <label class="form-label fw-bold">Date</label>
-            <input type="date" class="form-control form-control-lg bg-white" name="Date" required>
+    }
+
+    <div class="d-flex justify-content-between align-items-center mb-5 pb-3">
+        <div class="d-flex align-items-center">
+            <img src="/logo.png" alt="Logo Casa Monarca" class="me-3" style="height: 60px; width: auto; object-fit: contain;" />
+            <h1 class="display-6 brand-title mb-0">Servicio Social Casa Monarca</h1>
         </div>
+        <button class="btn btn-coordinator px-4 py-2 shadow-sm" onclick="checkCoordinatorPassword()">
+            Acceso de Administrador
+        </button>
+    </div>
+
+    <div class="card custom-card p-4 md-p-5 mx-auto">
+        <h3 class="text-center mb-4 card-subtitle text-uppercase">Registro de Voluntariado</h3>
         
-        <div class="row">
-            <div class="col-md-6 mb-4">
-                <label class="form-label fw-bold">Time of Entry</label>
-                <input type="time" class="form-control form-control-lg bg-white" name="TimeOfEntry" required>
+        <form action="/Home/SubmitRegistration" method="post">
+            <div class="mb-4">
+                <label class="form-label fw-bold">Nombre Completo</label>
+                <input type="text" class="form-control form-control-lg custom-input bg-white" name="FullName" placeholder="Ej. Juan Pérez" required>
             </div>
-            <div class="col-md-6 mb-4">
-                <label class="form-label fw-bold">Time of Leaving</label>
-                <input type="time" class="form-control form-control-lg bg-white" name="TimeOfLeaving" required>
+            
+            <div class="mb-4">
+                <label class="form-label fw-bold">Matrícula o Identificación</label>
+                <input type="text" class="form-control form-control-lg custom-input bg-white" name="IdentificationNumber" placeholder="Ej. ID-12345" required>
             </div>
-        </div>
-        
-        <button type="submit" class="btn btn-primary btn-lg w-100 mt-2 shadow-sm">Submit Registration</button>
-    </form>
+            
+            <div class="mb-4">
+                <label class="form-label fw-bold">Fecha de Actividad</label>
+                <input type="date" class="form-control form-control-lg custom-input bg-white" name="Date" required>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <label class="form-label fw-bold">Hora de Entrada</label>
+                    <input type="time" class="form-control form-control-lg custom-input bg-white" name="TimeOfEntry" required>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <label class="form-label fw-bold">Hora de Salida</label>
+                    <input type="time" class="form-control form-control-lg custom-input bg-white" name="TimeOfLeaving" required>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold">Código de Verificación (Supervisor)</label>
+                <input type="password" 
+                       class="form-control form-control-lg custom-input bg-white" 
+                       id="verificationCode" 
+                       name="verificationCode" 
+                       placeholder="••••" 
+                       required>
+            </div>
+
+            <button type="submit" class="btn btn-monarca btn-lg w-100 mt-2 text-white shadow-sm">
+                Confirmar y Registrar Horas
+            </button>
+        </form>
+    </div>
 </div>
 
 <script>
