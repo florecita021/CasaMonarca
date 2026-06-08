@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CasaMonarcaApp")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e99eaeccfc8b6eca92499a11135fc993003f5685")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+154e5b433e85241afca916bc90b13378b5546696")]
 [assembly: System.Reflection.AssemblyProductAttribute("CasaMonarcaApp")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CasaMonarcaApp")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
