@@ -127,28 +127,40 @@
                             }
 
                             @if (ranking != null && ranking.Any())
-                            {
-                                foreach (var item in ranking)
-                                {
-                                    <tr>
-                                        <td class="text-center fw-bold">
-                                            @if (contador == 1) { <span class="fs-5">🥇</span> }
-                                            else if (contador == 2) { <span class="fs-5">🥈</span> }
-                                            else if (contador == 3) { <span class="fs-5">🥉</span> }
-                                            else { <span class="text-muted small">#@contador</span> }
-                                        </td>
-                                        <td>
-                                            <span class="fw-bold text-dark">@item.NombreCompleto</span>
-                                        </td>
-                                        <td class="text-end pe-4">
-                                            <span class="badge px-3 py-2 fs-6" style="background-color: rgba(230, 92, 0, 0.1); color: #e65c00; font-weight: 700; border-radius: 8px;">
-                                                @item.HorasTotales hrs
-                                            </span>
-                                        </td>
-                                    </tr>
-                                    contador++;
-                                }
-                            }
+{
+    foreach (var item in ranking)
+    {
+        <tr>
+            <td class="text-center fw-bold">
+                @if (contador == 1) { <span class="fs-5">🥇</span> }
+                else if (contador == 2) { <span class="fs-5">🥈</span> }
+                else if (contador == 3) { <span class="fs-5">🥉</span> }
+                else { <span class="text-muted small">#@contador</span> }
+            </td>
+            <td>
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+                    <span class="fw-bold text-dark">@item.NombreCompleto</span>
+                    
+                    <!-- 📄 BOTÓN DE PDF EXCLUSIVO PARA LOS TOP 3 -->
+                    @if (contador <= 3)
+                    {
+                        <a href="/Home/DownloadCertificate?name=@Uri.EscapeDataString(item.NombreCompleto)&hours=@item.HorasTotales" 
+                           class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1 py-1 px-2" 
+                           style="border-radius: 6px; font-size: 0.75rem; font-weight: 700;">
+                            📄 Descargar Constancia
+                        </a>
+                    }
+                </div>
+            </td>
+            <td class="text-end pe-4">
+                <span class="badge px-3 py-2 fs-6" style="background-color: rgba(230, 92, 0, 0.1); color: #e65c00; font-weight: 700; border-radius: 8px;">
+                    @item.HorasTotales hrs
+                </span>
+            </td>
+        </tr>
+        contador++;
+    }
+}
                             else
                             {
                                 <tr>

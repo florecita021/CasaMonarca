@@ -5,9 +5,14 @@ using System.Text;
 using Newtonsoft.Json;
 using ClosedXML.Excel;
 
+// 📄 Directivas para la generación de PDF con QuestPDF
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
+
 namespace CasaMonarcaApp.Controllers;
 
-// 🎯 Creamos el ViewModel AQUÍ, afuera de la clase para que no cause errores de compilación
+// 🎯 ViewModel para agrupar las horas del ranking
 public class RankingVoluntarioViewModel
 {
     public string NombreCompleto { get; set; } = string.Empty;
@@ -143,10 +148,9 @@ public class HomeController : Controller
 
     public IActionResult Dashboard()
     {
-        // 1. Traemos los datos limpios de Supabase
         var logs = GetLogsFromDatabase();
 
-        // 2. Procesamos datos para las gráficas existentes de los últimos 7 días
+        // Procesamos datos para las gráficas de los últimos 7 días
         var last7Days = Enumerable.Range(0, 7)
             .Select(i => DateTime.Today.AddDays(-i))
             .OrderBy(d => d)
@@ -166,7 +170,7 @@ public class HomeController : Controller
         ViewBag.HoursData = System.Text.Json.JsonSerializer.Serialize(hoursPerDay);
         ViewBag.AttendanceData = System.Text.Json.JsonSerializer.Serialize(attendancePerDay);
 
-        // 🔥 3. NUEVO: Agrupamos por voluntario usando la propiedad nativa HoursVolunteered
+        // Agrupamos los datos por voluntario para el ranking de mayor a menor
         var rankingVoluntarios = logs
             .GroupBy(l => l.FullName)
             .Select(grupo => new RankingVoluntarioViewModel
@@ -174,50 +178,135 @@ public class HomeController : Controller
                 NombreCompleto = grupo.Key,
                 HorasTotales = Math.Round(grupo.Sum(l => l.HoursVolunteered), 2)
             })
-            .OrderByDescending(r => r.HorasTotales) // De mayor a menor
+            .OrderByDescending(r => r.HorasTotales)
             .ToList();
 
-        // Pasamos el ranking procesado a la vista mediante el ViewBag
         ViewBag.RankingVoluntarios = rankingVoluntarios;
 
         return View(logs);
     }
-    [HttpPost]
-public async Task<IActionResult> ResetDatabase(string securityCode)
-{
-    const string CodigoAutorizado = "BorrarACM26";
 
-    if (string.IsNullOrEmpty(securityCode) || securityCode.Trim() != CodigoAutorizado)
+    [HttpPost]
+    public async Task<IActionResult> ResetDatabase(string securityCode)
     {
-        TempData["ErrorMessage"] = "Código de seguridad incorrecto. No se realizó ninguna acción.";
+        const string CodigoAutorizado = "BorrarACM26";
+
+        if (string.IsNullOrEmpty(securityCode) || securityCode.Trim() != CodigoAutorizado)
+        {
+            TempData["ErrorMessage"] = "Código de seguridad incorrecto. No se realizó ninguna acción.";
+            return RedirectToAction("Dashboard");
+        }
+
+        try
+        {
+            var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Clear();
+            client.DefaultRequestHeaders.Add("apikey", SupabaseApiKey);
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {SupabaseApiKey}");
+
+            // Eliminación masiva en Supabase indicando que limpie las filas con ID válido
+            var response = await client.DeleteAsync($"{SupabaseUrl}?identificationnumber=not.is.null");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorBody = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Supabase Delete Error: {response.StatusCode} - {errorBody}");
+            }
+
+            TempData["SuccessMessage"] = "¡La base de datos ha sido reiniciada con éxito para el nuevo ciclo anual!";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al reiniciar la base de datos en Supabase");
+            TempData["ErrorMessage"] = $"Error al borrar los datos: {ex.Message}";
+        }
+
         return RedirectToAction("Dashboard");
     }
 
-    try
+[HttpGet]
+public IActionResult DownloadCertificate(string name, double hours)
+{
+    // 🔐 Licencia Comunitaria Obligatoria de QuestPDF
+    QuestPDF.Settings.License = LicenseType.Community;
+
+    if (string.IsNullOrEmpty(name))
     {
-        var client = _httpClientFactory.CreateClient();
-        client.DefaultRequestHeaders.Clear();
-        client.DefaultRequestHeaders.Add("apikey", SupabaseApiKey);
-        client.DefaultRequestHeaders.Add("Authorization", $"Bearer {SupabaseApiKey}");
+        TempData["ErrorMessage"] = "No se pudo generar la constancia: Nombre inválido.";
+        return RedirectToAction("Dashboard");
+    }
 
-        // ⚠️ Filtro Nativo de Supabase: Para borrar todo de golpe, le decimos a la API 
-        // que elimine registros donde la identificación no sea nula (aplica a todos)
-        var response = await client.DeleteAsync($"{SupabaseUrl}?identificationnumber=not.is.null");
-
-        if (!response.IsSuccessStatusCode)
+    // Creación de la estructura del PDF usando el motor fluido corregido
+    var pdfMetadata = Document.Create(container =>
+    {
+        container.Page(page =>
         {
-            var errorBody = await response.Content.ReadAsStringAsync();
-            throw new Exception($"Supabase Delete Error: {response.StatusCode} - {errorBody}");
-        }
+            page.Margin(40);
+            page.Size(PageSizes.Letter.Landscape()); // Formato horizontal tipo diploma
+            page.Content().Border(3).BorderColor("#e65c00").Padding(30).Column(column =>
+            {
+                // 1. ENCABEZADO
+                column.Item().Row(row =>
+                {
+                    row.RelativeItem().Column(stack =>
+                    {
+                        // CORRECCIÓN 2 y 3: Se cambia TextColor por FontColor
+                        stack.Item().Text("CASA MONARCA").FontSize(28).Bold().FontColor("#e65c00").FontFamily("Arial");
+                        stack.Item().Text("AYUDA HUMANITARIA AL MIGRANTE, A.B.P.").FontSize(10).LetterSpacing(0.1f).FontColor(Colors.Grey.Darken2);
+                    });
+                    
+                    // CORRECCIÓN 4: Se cambia TextColor por FontColor
+                    row.ConstantItem(120).Text("🏆 TOP VOLUNTARIO").FontSize(10).Bold().FontColor("#ff7a21").AlignRight();
+                });
 
-        TempData["SuccessMessage"] = "¡La base de datos ha sido reiniciada con éxito para el nuevo ciclo anual!";
-    }
-    catch (Exception ex)
-    {
-        _logger.LogError(ex, "Error al reiniciar la base de datos en Supabase");
-        TempData["ErrorMessage"] = $"Error al borrar los datos: {ex.Message}";
-    }
+                column.Item().PaddingTop(20).LineHorizontal(1).LineColor(Colors.Grey.Lighten1);
 
-    return RedirectToAction("Dashboard");
+                // 2. CUERPO DEL DIPLOMA
+                // CORRECCIÓN 5 y 6: Se cambia TextColor por FontColor
+                column.Item().PaddingTop(40).Text("RECONOCIMIENTO").FontSize(36).Bold().FontColor(Colors.Black).AlignCenter();
+                column.Item().PaddingTop(15).Text("Otorgado con profunda gratitud a:").FontSize(14).Italic().FontColor(Colors.Grey.Darken3).AlignCenter();
+                
+                // Nombre del Voluntario Destacado
+                // CORRECCIÓN 7: Se cambia TextColor por FontColor
+                column.Item().PaddingTop(20).Text(name.ToUpper()).FontSize(26).Bold().FontColor("#e65c00").AlignCenter();
+                
+                // Texto descriptivo de las horas de servicio social
+                column.Item().PaddingTop(25).Text(text =>
+                {
+                    text.Span("Por su invaluable apoyo, dedicación y compromiso humanitario reflejado en la realización de un total acumulado de ").FontSize(13).LineHeight(1.5f);
+                    // CORRECCIÓN 8: Se cambia TextColor por FontColor en el Span interno
+                    text.Span($"{hours:F2} hrs ").FontSize(14).Bold().FontColor("#e65c00");
+                    text.Span("de servicio social voluntario durante el presente ciclo operativo, contribuyendo activamente al bienestar de nuestra comunidad.").FontSize(13);
+                });
+
+                // 3. PIE DE PÁGINA Y FIRMAS
+                column.Item().AlignBottom().Row(row =>
+                {
+                    row.RelativeItem().Column(firma =>
+                    {
+                        firma.Item().LineHorizontal(1).LineColor(Colors.Black);
+                        firma.Item().PaddingTop(5).Text("Coordinación de Voluntariado").FontSize(11).Bold().AlignCenter();
+                        // CORRECCIÓN 9: Se cambia TextColor por FontColor
+                        firma.Item().Text("Casa Monarca A.B.P.").FontSize(9).FontColor(Colors.Grey.Darken1).AlignCenter();
+                    });
+
+                    row.ConstantItem(80); // Separador en blanco
+
+                    row.RelativeItem().Column(fecha =>
+                    {
+                        fecha.Item().PaddingTop(15).Text($"Expedido el: {DateTime.Today:dd/MM/yyyy}").FontSize(11).AlignRight();
+                        // CORRECCIÓN 10: Se cambia TextColor por FontColor
+                        fecha.Item().Text("Monterrey, Nuevo León, México").FontSize(9).FontColor(Colors.Grey.Darken1).AlignRight();
+                    });
+                });
+            });
+        });
+    });
+
+    // Procesa el render y descarga el flujo de bytes binarios directos
+    byte[] pdfBytes = pdfMetadata.GeneratePdf();
+    string fileName = $"Constancia_{name.Replace(" ", "_")}.pdf";
+    
+    return File(pdfBytes, "application/pdf", fileName);
 }
 }
