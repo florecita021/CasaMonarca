@@ -3,6 +3,7 @@
     ViewData["Title"] = "Dashboard de Administración";
 }
 
+<!-- Hojas de estilo y fuentes -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -41,9 +42,35 @@
         background-color: #e65c00;
         color: white;
     }
+    .search-input {
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    .search-input:focus {
+        border-color: #e65c00;
+        box-shadow: 0 0 0 3px rgba(230, 92, 0, 0.15);
+        outline: none;
+    }
+    .btn-excel {
+        background-color: #1f7244;
+        color: white;
+        font-weight: 700;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        border: none;
+    }
+    .btn-excel:hover {
+        background-color: #154c2e;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(31, 114, 68, 0.25);
+    }
 </style>
 
 <div class="container py-4">
+    <!-- Encabezado del Dashboard -->
     <div class="dashboard-header d-flex justify-content-between align-items-center mb-4">
         <div>
             <h1 class="fw-bold mb-1">Panel de Control General</h1>
@@ -54,6 +81,7 @@
         </a>
     </div>
 
+    <!-- 📊 SECCIÓN DE GRÁFICAS -->
     <div class="row mb-5">
         <div class="col-md-6 mb-4 mb-md-0">
             <div class="card stat-card p-4">
@@ -69,6 +97,7 @@
         </div>
     </div>
 
+    <!-- 🥇 SECCIÓN: RANKING DE HORAS TOTALES ACUMULADAS -->
     <div class="row mb-5">
         <div class="col-12">
             <div class="table-container p-4">
@@ -133,14 +162,27 @@
         </div>
     </div>
 
-    <div class="row">
+    <!-- 📋 TABLA HISTÓRICA DETALLADA -->
+    <div class="row mb-4">
         <div class="col-12">
             <div class="table-container">
-                <div class="table-header-custom p-3 fw-bold fs-5">
-                    Resumen Histórico y Desglose de Entradas
+                
+                <!-- Barra Superior de la Tabla con Buscador Dinámico integrado -->
+                <div class="table-header-custom p-3 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                    <div class="fw-bold fs-5">
+                        📋 Resumen Histórico y Desglose de Entradas
+                    </div>
+                    <!-- 🔍 BARRA DE BÚSQUEDA REACTIVADA -->
+                    <div style="max-width: 350px; width: 100%;">
+                        <input type="text" 
+                               id="tableSearch" 
+                               class="form-control search-input bg-white text-dark py-2 px-3" 
+                               placeholder="🔍 Buscar voluntario o ID...">
+                    </div>
                 </div>
+
                 <div class="table-responsive">
-                    <table class="table table-striped table-hover align-middle mb-0">
+                    <table class="table table-striped table-hover align-middle mb-0" id="historyTable">
                         <thead>
                             <tr>
                                 <th class="ps-3">Nombre</th>
@@ -156,9 +198,9 @@
                             {
                                 foreach (var log in Model)
                                 {
-                                    <tr>
-                                        <td class="ps-3 fw-semibold text-primary">@log.FullName</td>
-                                        <td class="text-muted">@log.IdentificationNumber</td>
+                                    <tr class="searchable-row">
+                                        <td class="ps-3 fw-semibold text-primary volunteer-name">@log.FullName</td>
+                                        <td class="text-muted volunteer-id">@log.IdentificationNumber</td>
                                         <td>@log.Date.ToString("dd/MM/yyyy")</td>
                                         <td>@(log.TimeOfEntry?.ToString(@"hh\:mm") ?? "--:--")</td>
                                         <td>@(log.TimeOfLeaving?.ToString(@"hh\:mm") ?? "--:--")</td>
@@ -168,21 +210,100 @@
                             }
                             else
                             {
-                                <tr>
+                                <tr id="noDataRow">
                                     <td colspan="6" class="text-center py-4 text-muted">No se encontraron registros de asistencias.</td>
                                 </tr>
                             }
+                            <!-- Fila dinámica si la búsqueda no arroja resultados -->
+                            <tr id="noResultsRow" style="display: none;">
+                                <td colspan="6" class="text-center py-4 text-muted fw-semibold">No se encontraron coincidencias para la búsqueda.</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- 📥 ACCIONES COMPLEMENTARIAS DE LA PARTE INFERIOR -->
+    <!-- 📥 ACCIONES COMPLEMENTARIAS DE LA PARTE INFERIOR -->
+    <div class="row mb-5">
+        <div class="col-12 d-flex justify-content-between align-items-center flex-column flex-md-row gap-3">
+            <!-- 🔴 BOTÓN REINICIAR BASE DE DATOS (Lado Izquierdo) -->
+            <button type="button" class="btn btn-outline-danger px-4 py-3 fw-bold d-flex align-items-center gap-2" 
+                    style="border-radius: 10px; border-width: 2px;" data-bs-toggle="modal" data-bs-target="#resetModal">
+                🗑️ Reiniciar Ciclo Anual (Borrar Todo)
+            </button>
+
+            <!-- 🟢 BOTÓN EXPORTAR A EXCEL (Lado Derecho) -->
+            <a href="/Home/ExportToExcel" class="btn btn-excel px-4 py-3 shadow-sm d-flex align-items-center gap-2">
+                📊 Exportar Todo a Excel
+            </a>
+        </div>
+    </div>
+</div> <!-- Cierre del div container original -->
+
+<!-- 🔐 MODAL DE CONFIRMACIÓN DE SEGURIDAD (Pégalo al final del archivo, antes de los <script>) -->
+<div class="modal fade" id="resetModal" tabindex="-1" aria-labelledby="resetModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 15px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+            <div class="modal-header bg-danger text-white" style="border-top-left-radius: 15px; border-top-right-radius: 15px;">
+                <h5 class="modal-title fw-bold" id="resetModalLabel">⚠️ Acción Crítica de Fin de Año</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="/Home/ResetDatabase" method="post">
+                <div class="modal-body p-4">
+                    <p class="fw-semibold text-dark">Estás a punto de borrar de forma permanente todos los registros de voluntariado acumulados en el sistema.</p>
+                    <p class="text-muted small">Esta acción es irreversible. Se recomienda exportar un respaldo a Excel antes de proceder.</p>
+                    
+                    <div class="mb-3 mt-4">
+                        <label for="securityCode" class="form-label fw-bold text-danger small text-uppercase">Código de Confirmación Requerido:</label>
+                        <input type="password" class="form-control py-2 px-3" id="securityCode" name="securityCode" 
+                               placeholder="Escribe el código autorizado aquí" required style="border-radius: 8px; border: 2px solid #ced4da;">
+                    </div>
+                </div>
+                <div class="modal-footer bg-light p-3" style="border-bottom-left-radius: 15px; border-bottom-right-radius: 15px;">
+                    <button type="button" class="btn btn-secondary fw-semibold px-3 py-2" data-bs-dismiss="modal" style="border-radius: 8px;">Cancelar</button>
+                    <button type="submit" class="btn btn-danger fw-bold px-4 py-2" style="border-radius: 8px;">Confirmar Eliminación Total</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
+<!-- 📦 SCRIPTS PARA EVITAR CONFLICTOS, CONFIGURAR GRÁFICAS Y BUSCADOR -->
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        // Validación segura de datos pasados desde el backend
+        
+        // 1. FUNCIONALIDAD DEL BUSCADOR EN TIEMPO REAL
+        var searchInput = document.getElementById('tableSearch');
+        if (searchInput) {
+            searchInput.addEventListener('keyup', function () {
+                var filter = this.value.toLowerCase().trim();
+                var rows = document.querySelectorAll('.searchable-row');
+                var visibleCount = 0;
+
+                rows.forEach(function (row) {
+                    var nameText = row.querySelector('.volunteer-name').textContent.toLowerCase();
+                    var idText = row.querySelector('.volunteer-id').textContent.toLowerCase();
+
+                    if (nameText.includes(filter) || idText.includes(filter)) {
+                        row.style.display = '';
+                        visibleCount++;
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                // Mostrar mensaje amigable si la búsqueda queda en blanco
+                var noResultsRow = document.getElementById('noResultsRow');
+                if (noResultsRow) {
+                    noResultsRow.style.display = (visibleCount === 0 && rows.length > 0) ? '' : 'none';
+                }
+            });
+        }
+
+        // 2. LOGICA Y RENDERIZADO DE LAS GRÁFICAS (CHART.JS)
         var labelsRaw = '@Html.Raw(ViewBag.ChartLabels)';
         var hoursRaw = '@Html.Raw(ViewBag.HoursData)';
         var attendanceRaw = '@Html.Raw(ViewBag.AttendanceData)';
@@ -192,7 +313,7 @@
             var hoursData = JSON.parse(hoursRaw);
             var attendanceData = JSON.parse(attendanceRaw);
 
-            // 1. Inicializar Gráfica de Horas
+            // Gráfica de Horas
             var ctxHours = document.getElementById('hoursChart').getContext('2d');
             new Chart(ctxHours, {
                 type: 'bar',
@@ -215,7 +336,7 @@
                 }
             });
 
-            // 2. Inicializar Gráfica de Asistencias
+            // Gráfica de Asistencias
             var ctxAuth = document.getElementById('attendanceChart').getContext('2d');
             new Chart(ctxAuth, {
                 type: 'line',

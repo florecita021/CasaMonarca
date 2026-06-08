@@ -182,4 +182,42 @@ public class HomeController : Controller
 
         return View(logs);
     }
+    [HttpPost]
+public async Task<IActionResult> ResetDatabase(string securityCode)
+{
+    const string CodigoAutorizado = "BorrarACM26";
+
+    if (string.IsNullOrEmpty(securityCode) || securityCode.Trim() != CodigoAutorizado)
+    {
+        TempData["ErrorMessage"] = "Código de seguridad incorrecto. No se realizó ninguna acción.";
+        return RedirectToAction("Dashboard");
+    }
+
+    try
+    {
+        var client = _httpClientFactory.CreateClient();
+        client.DefaultRequestHeaders.Clear();
+        client.DefaultRequestHeaders.Add("apikey", SupabaseApiKey);
+        client.DefaultRequestHeaders.Add("Authorization", $"Bearer {SupabaseApiKey}");
+
+        // ⚠️ Filtro Nativo de Supabase: Para borrar todo de golpe, le decimos a la API 
+        // que elimine registros donde la identificación no sea nula (aplica a todos)
+        var response = await client.DeleteAsync($"{SupabaseUrl}?identificationnumber=not.is.null");
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorBody = await response.Content.ReadAsStringAsync();
+            throw new Exception($"Supabase Delete Error: {response.StatusCode} - {errorBody}");
+        }
+
+        TempData["SuccessMessage"] = "¡La base de datos ha sido reiniciada con éxito para el nuevo ciclo anual!";
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error al reiniciar la base de datos en Supabase");
+        TempData["ErrorMessage"] = $"Error al borrar los datos: {ex.Message}";
+    }
+
+    return RedirectToAction("Dashboard");
+}
 }
